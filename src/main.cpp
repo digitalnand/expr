@@ -18,7 +18,7 @@ enum TokenKind {
 
 struct Token {
     TokenKind kind;
-    std::optional<int64_t> data;
+    std::variant<int64_t, char> value;
 };
 
 struct Node {
@@ -61,7 +61,7 @@ auto Reader::next_token() -> Token {
     skip_spaces();
 
     if(input.empty()) {
-        return Token{END_OF_LINE, std::nullopt};
+        return Token{END_OF_LINE, NULL};
     }
 
     Token token;
@@ -72,14 +72,15 @@ auto Reader::next_token() -> Token {
     }
     else if(current_character == '+') {
         input.remove_prefix(1);
-        return Token{PLUS, std::nullopt};
+        return Token{PLUS, '+'};
     }
     else {
         input.remove_prefix(1);
-        return Token{ILLEGAL, std::nullopt};
+        return Token{ILLEGAL, current_character};
     }
 }
 
+// TODO: improve error handling
 auto Reader::parse_expression() -> Node {
     Node tree;
     Token current_token;
@@ -91,7 +92,7 @@ auto Reader::parse_expression() -> Node {
         first_operand = last_node.value();
     } else {
         current_token = next_token();
-        if(not current_token.data.has_value() || current_token.kind != NUMBER) {
+        if(current_token.kind != NUMBER) {
             std::cerr << "expr: runtime error: expressions must begin with natural numbers\n";
             exit(1);
         }
@@ -106,7 +107,7 @@ auto Reader::parse_expression() -> Node {
     tree.internal = current_token;
 
     current_token = next_token();
-    if(not current_token.data.has_value() || current_token.kind != NUMBER) {
+    if(current_token.kind != NUMBER) {
         std::cerr << "expr: runtime error: expressions must end with natural numbers\n";
         exit(1);
     }
@@ -126,11 +127,11 @@ auto Reader::parse_expression() -> Node {
 auto debug_token(const Token& token) -> std::string {
     switch(token.kind) {
     case NUMBER:
-        return std::format("NUMBER[{}]", token.data.value());
+        return std::format("NUMBER[{}]", std::get<int64_t>(token.value));
     case PLUS:
         return "PLUS";
     case ILLEGAL:
-        return "ILLEGAL";
+        return std::format("ILLEGAL[{}]", std::get<char>(token.value));;
     case END_OF_LINE:
         return "END_OF_LINE";
     default:
@@ -142,7 +143,7 @@ auto debug_token_vector(const std::vector<Token>& tokens) -> std::string {
     std::string output = "{";
     
     const char* separator = "";
-    for (const Token& token : tokens) {
+    for(const Token& token : tokens) {
         output += separator + debug_token(token);
         separator = ", ";
     }
