@@ -67,17 +67,18 @@ auto Reader::next_token() -> Token {
     Token token;
     const auto current_character = input.at(0);
 
-    if(std::isdigit(current_character)) {
-        const auto full_number = extract_number();
-        return Token{NUMBER, full_number};
-    }
-    else if(current_character == '+') {
-        input.remove_prefix(1);
-        return Token{PLUS, '+'};
-    }
-    else {
-        input.remove_prefix(1);
-        return Token{ILLEGAL, current_character};
+    switch(current_character) {
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9': {
+            const auto full_number = extract_number();
+            return Token{NUMBER, full_number};
+        }
+        case '+':
+            input.remove_prefix(1);
+            return Token{PLUS, '+'};
+        default:
+            input.remove_prefix(1);
+            return Token{ILLEGAL, current_character};
     }
 }
 
@@ -170,7 +171,7 @@ auto debug_node(const Node& node) -> std::string {
 }
 
 auto main() -> int32_t {
-    std::string input = "5+5+5+5+5+5+5+5";
+    std::string input = "1000000000 + 100000000 + 10000000 + 1000000 + 100000 + 10000 + 1000 + 100 + 10 + 1";
 
     Reader reader(input);
     Node tree = reader.parse_expression();
