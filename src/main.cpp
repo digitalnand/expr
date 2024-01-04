@@ -4,7 +4,6 @@
 #include <string_view>
 #include <utility>
 #include <vector>
-#include <sstream>
 
 // TODO: parser, evaluator & repl
 
@@ -99,17 +98,16 @@ auto debug_token(const Token& token) -> std::string {
 }
 
 auto debug_token_vector(const std::vector<Token>& tokens) -> std::string {
-    std::ostringstream output;
-    output << "{";
+    std::string output = "{";
     
     const char* separator = "";
     for (const Token& token : tokens) {
-        output << separator << debug_token(token);
+        output += separator + debug_token(token);
         separator = ", ";
     }
 
-    output << "}";
-    return output.str();
+    output += "}";
+    return output;
 }
 
 auto main() -> int {
