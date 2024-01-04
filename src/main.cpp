@@ -68,7 +68,8 @@ auto Reader::next_token() -> Token {
     const auto current_character = input.at(0);
 
     if(std::isdigit(current_character)) {
-        return Token{NUMBER, extract_number()};
+        const auto full_number = extract_number();
+        return Token{NUMBER, full_number};
     }
     else if(current_character == '+') {
         input.remove_prefix(1);
@@ -83,10 +84,9 @@ auto Reader::next_token() -> Token {
 // TODO: improve error handling
 auto Reader::parse_expression() -> Node {
     Node tree;
-    Token current_token;
-
     Node* first_operand;
     Node* second_operand;
+    Token current_token;
 
     if(last_node.has_value()) {
         first_operand = last_node.value();
@@ -124,6 +124,17 @@ auto Reader::parse_expression() -> Node {
     return tree;
 }
 
+auto eval_from_node(Node node) -> int64_t {
+    switch(node.internal.kind) {
+    case PLUS:
+        return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());
+    case NUMBER:
+        return std::get<int64_t>(node.internal.value);
+    default:
+        std::unreachable();
+    }
+}
+
 auto debug_token(const Token& token) -> std::string {
     switch(token.kind) {
     case NUMBER:
@@ -159,12 +170,11 @@ auto debug_node(const Node& node) -> std::string {
 }
 
 auto main() -> int32_t {
-    std::string input = "1+2+3+4";
-    std::cout << std::format("input: {}\n", input);
+    std::string input = "5+5+5+5+5+5+5+5";
 
     Reader reader(input);
     Node tree = reader.parse_expression();
-    std::cout << debug_node(tree) << std::endl;
+    std::cout << std::format("result of {}: {}\n", input, eval_from_node(tree));
 
     return 0;
 }
