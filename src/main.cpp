@@ -21,27 +21,34 @@ struct Token {
     std::optional<int64_t> data;
 };
 
-struct Lexer {
-    std::string_view input;
-
-    Lexer(const std::string& string);
-    auto skip_spaces()     -> void;
-    auto extract_number()  -> int64_t;
-    auto next_token()      -> Token;
-    auto lex()             -> std::vector<Token>;
+struct Node {
+    Token internal;
+    std::optional<Node*> left;
+    std::optional<Node*> right;
 };
 
-Lexer::Lexer(const std::string& string) {
+struct Reader {
+    std::string_view input;
+    std::optional<Node*> last_node;
+
+    Reader(const std::string& string);
+    auto skip_spaces() -> void;
+    auto extract_number() -> int64_t;
+    auto next_token() -> Token;
+    auto parse_expression() -> Node;
+};
+
+Reader::Reader(const std::string& string) {
     input = string;
 }
 
-auto Lexer::skip_spaces() -> void {
+auto Reader::skip_spaces() -> void {
     while(not input.empty() && std::isspace(input.at(0))) {
         input.remove_prefix(1);
     }
 }
 
-auto Lexer::extract_number() -> int64_t {
+auto Reader::extract_number() -> int64_t {
     std::string numeric_value = "";
     while(not input.empty() && std::isdigit(input.at(0))) {
         numeric_value += input.at(0);
@@ -50,7 +57,7 @@ auto Lexer::extract_number() -> int64_t {
     return std::stol(numeric_value);
 }
 
-auto Lexer::next_token() -> Token {
+auto Reader::next_token() -> Token {
     skip_spaces();
 
     if(input.empty()) {
@@ -73,15 +80,47 @@ auto Lexer::next_token() -> Token {
     }
 }
 
-auto Lexer::lex() -> std::vector<Token> {
-    std::vector<Token> tokens;
+auto Reader::parse_expression() -> Node {
+    Node tree;
+    Token current_token;
 
-    Token token;
-    while((token = next_token()).kind != END_OF_LINE) {
-        tokens.push_back(token);
+    Node* first_operand;
+    Node* second_operand;
+
+    if(last_node.has_value()) {
+        first_operand = last_node.value();
+    } else {
+        current_token = next_token();
+        if(not current_token.data.has_value() || current_token.kind != NUMBER) {
+            std::cerr << "expr: runtime error: expressions must begin with natural numbers\n";
+            exit(1);
+        }
+        first_operand = new Node{current_token, std::nullopt, std::nullopt};
+    }
+    
+    current_token = next_token();
+    if(current_token.kind != PLUS) {
+        std::cerr << "expr: runtime error: expressions must have operators\n";
+        exit(1);
+    }
+    tree.internal = current_token;
+
+    current_token = next_token();
+    if(not current_token.data.has_value() || current_token.kind != NUMBER) {
+        std::cerr << "expr: runtime error: expressions must end with natural numbers\n";
+        exit(1);
+    }
+    second_operand = new Node{current_token, std::nullopt, std::nullopt};
+
+    tree.left = first_operand;
+    if(not input.empty()) {
+        last_node = second_operand;
+        tree.right = new Node{parse_expression()};
+    } else {
+        tree.right = second_operand;
     }
 
-    return tokens;
+    return tree;
 }
 
 auto debug_token(const Token& token) -> std::string {
@@ -112,11 +151,19 @@ auto debug_token_vector(const std::vector<Token>& tokens) -> std::string {
     return output;
 }
 
+auto debug_node(const Node& node) -> std::string {
+    auto left = node.left.has_value() ? debug_node(*node.left.value()) : "None";
+    auto right = node.right.has_value() ? debug_node(*node.right.value()) : "None";
+    return std::format("Node[Internal: {}, Left: {}, Right: {}]", debug_token(node.internal), left, right);
+}
+
 auto main() -> int32_t {
-    std::string input = "    123456789  +987654321";
+    std::string input = "1+2+3+4";
     std::cout << std::format("input: {}\n", input);
 
-    Lexer lexer(input);
-    std::cout << std::format("tokens: {}\n", debug_token_vector(lexer.lex()));
+    Reader reader(input);
+    Node tree = reader.parse_expression();
+    std::cout << debug_node(tree) << std::endl;
+
     return 0;
 }
