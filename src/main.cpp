@@ -1,6 +1,8 @@
+#include <cstdint>
 #include <iostream>
 #include <format>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -16,7 +18,7 @@ enum TokenKind {
 
 struct Token {
     TokenKind kind;
-    std::optional<int> data;
+    std::optional<int64_t> data;
 };
 
 struct Lexer {
@@ -24,7 +26,7 @@ struct Lexer {
 
     Lexer(const std::string& string);
     auto skip_spaces()     -> void;
-    auto extract_number()  -> int;
+    auto extract_number()  -> int64_t;
     auto next_token()      -> Token;
     auto lex()             -> std::vector<Token>;
 };
@@ -39,13 +41,13 @@ auto Lexer::skip_spaces() -> void {
     }
 }
 
-auto Lexer::extract_number() -> int {
+auto Lexer::extract_number() -> int64_t {
     std::string numeric_value = "";
     while(not input.empty() && std::isdigit(input.at(0))) {
         numeric_value += input.at(0);
         input.remove_prefix(1);
     }
-    return std::stoi(numeric_value);
+    return std::stol(numeric_value);
 }
 
 auto Lexer::next_token() -> Token {
@@ -56,7 +58,7 @@ auto Lexer::next_token() -> Token {
     }
 
     Token token;
-    auto current_character = input.at(0);
+    const auto current_character = input.at(0);
 
     if(std::isdigit(current_character)) {
         return Token{NUMBER, extract_number()};
@@ -110,7 +112,7 @@ auto debug_token_vector(const std::vector<Token>& tokens) -> std::string {
     return output;
 }
 
-auto main() -> int {
+auto main() -> int32_t {
     std::string input = "    123456789  +987654321";
     std::cout << std::format("input: {}\n", input);
 
