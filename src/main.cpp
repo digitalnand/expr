@@ -12,6 +12,7 @@
 enum TokenKind {
     NUMBER,
     PLUS,
+    MINUS,
     ILLEGAL,
     END_OF_LINE,
 };
@@ -76,6 +77,9 @@ auto Reader::next_token() -> Token {
         case '+':
             input.remove_prefix(1);
             return Token{PLUS, '+'};
+        case '-':
+            input.remove_prefix(1);
+            return Token{MINUS, '-'};
         default:
             input.remove_prefix(1);
             return Token{ILLEGAL, current_character};
@@ -101,7 +105,7 @@ auto Reader::parse_expression() -> Node {
     }
     
     current_token = next_token();
-    if(current_token.kind != PLUS) {
+    if(current_token.kind != PLUS && current_token.kind != MINUS) {
         std::cerr << "expr: syntax error: expressions must have operators\n";
         exit(1);
     }
@@ -130,6 +134,8 @@ auto eval_from_node(Node node) -> int64_t {
     switch(node.internal.kind) {
     case PLUS:
         return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());
+    case MINUS:
+        return eval_from_node(*node.left.value()) - eval_from_node(*node.right.value());
     case NUMBER:
         return std::get<int64_t>(node.internal.value);
     default:
@@ -143,6 +149,8 @@ auto debug_token(const Token& token) -> std::string {
         return std::format("NUMBER[{}]", std::get<int64_t>(token.value));
     case PLUS:
         return "PLUS";
+    case MINUS:
+        return "MINUS";
     case ILLEGAL:
         return std::format("ILLEGAL[{}]", std::get<char>(token.value));;
     case END_OF_LINE:
@@ -172,7 +180,7 @@ auto debug_node(const Node& node) -> std::string {
 }
 
 auto main() -> int32_t {
-    std::string input = "1000000000 + 100000000 + 10000000 + 1000000 + 100000 + 10000 + 1000 + 100 + 10 + 1";
+    std::string input = "15 - 5 - 5 - 5";
 
     Reader reader(input);
     Node tree = reader.parse_expression();
