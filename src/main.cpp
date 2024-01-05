@@ -84,10 +84,10 @@ auto Reader::next_token() -> Token {
 
 // TODO: improve error handling
 auto Reader::parse_expression() -> Node {
-    Node tree;
+    Node expression;
     Node* first_operand;
     Node* second_operand;
-    Token current_token;
+    Token current_token, internal;
 
     if(last_node.has_value()) {
         first_operand = last_node.value();
@@ -105,7 +105,7 @@ auto Reader::parse_expression() -> Node {
         std::cerr << "expr: syntax error: expressions must have operators\n";
         exit(1);
     }
-    tree.internal = current_token;
+    internal = current_token;
 
     current_token = next_token();
     if(current_token.kind != NUMBER) {
@@ -114,15 +114,16 @@ auto Reader::parse_expression() -> Node {
     }
     second_operand = new Node{current_token, std::nullopt, std::nullopt};
 
-    tree.left = first_operand;
+    expression.internal = internal;
+    expression.left = first_operand;
+    expression.right = second_operand;
+
     if(not input.empty()) {
-        last_node = second_operand;
-        tree.right = new Node{parse_expression()};
-    } else {
-        tree.right = second_operand;
+        last_node = new Node{expression};
+        expression = parse_expression();
     }
 
-    return tree;
+    return expression;
 }
 
 auto eval_from_node(Node node) -> int64_t {
