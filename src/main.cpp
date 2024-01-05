@@ -46,14 +46,14 @@ Reader::Reader(const std::string& string) {
 }
 
 auto Reader::skip_spaces() -> void {
-    while(not input.empty() && std::isspace(input.at(0))) {
+    while(!input.empty() && std::isspace(input.at(0))) {
         input.remove_prefix(1);
     }
 }
 
 auto Reader::extract_number() -> int64_t {
     std::string numeric_value = "";
-    while(not input.empty() && std::isdigit(input.at(0))) {
+    while(!input.empty() && std::isdigit(input.at(0))) {
         numeric_value += input.at(0);
         input.remove_prefix(1);
     }
@@ -136,7 +136,7 @@ auto Reader::parse_expression() -> Node {
     expression.left = first_operand;
     expression.right = second_operand;
 
-    if(not input.empty()) {
+    if(!input.empty()) {
         last_node = new Node{expression};
         expression = parse_expression();
     }
