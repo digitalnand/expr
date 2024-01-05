@@ -36,6 +36,8 @@ struct Reader {
     auto skip_spaces() -> void;
     auto extract_number() -> int64_t;
     auto next_token() -> Token;
+
+    auto parse_operand() -> Node;
     auto parse_expression() -> Node;
 };
 
@@ -87,6 +89,29 @@ auto Reader::next_token() -> Token {
 }
 
 // TODO: improve error handling
+auto Reader::parse_operand() -> Node {
+    auto sign = PLUS;
+    auto current_token = next_token();
+
+    if(current_token.kind == PLUS || current_token.kind == MINUS) {
+        sign = current_token.kind;
+        current_token = next_token();
+    }
+
+    if(current_token.kind != NUMBER) {
+        std::cerr << "expr: syntax error: operands must be integers\n";
+        exit(1);
+    }
+    
+    if(sign == MINUS) {
+        const auto negated_value = -std::get<int64_t>(current_token.value);
+        current_token.value = negated_value;
+    }
+
+    return Node{current_token, std::nullopt, std::nullopt};
+}
+
+// TODO: improve error handling
 auto Reader::parse_expression() -> Node {
     Node expression;
     Node* first_operand;
@@ -96,12 +121,7 @@ auto Reader::parse_expression() -> Node {
     if(last_node.has_value()) {
         first_operand = last_node.value();
     } else {
-        current_token = next_token();
-        if(current_token.kind != NUMBER) {
-            std::cerr << "expr: syntax error: expressions must begin with natural numbers\n";
-            exit(1);
-        }
-        first_operand = new Node{current_token, std::nullopt, std::nullopt};
+        first_operand = new Node{parse_operand()};
     }
     
     current_token = next_token();
@@ -111,12 +131,7 @@ auto Reader::parse_expression() -> Node {
     }
     internal = current_token;
 
-    current_token = next_token();
-    if(current_token.kind != NUMBER) {
-        std::cerr << "expr: syntax error: expressions must end with natural numbers\n";
-        exit(1);
-    }
-    second_operand = new Node{current_token, std::nullopt, std::nullopt};
+    second_operand = new Node{parse_operand()};
 
     expression.internal = internal;
     expression.left = first_operand;
@@ -180,7 +195,7 @@ auto debug_node(const Node& node) -> std::string {
 }
 
 auto main() -> int32_t {
-    std::string input = "15 - 5 - 5 - 5";
+    std::string input = "+1 - +1 + -2";
 
     Reader reader(input);
     Node tree = reader.parse_expression();
