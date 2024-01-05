@@ -94,7 +94,7 @@ auto Reader::parse_expression() -> Node {
     } else {
         current_token = next_token();
         if(current_token.kind != NUMBER) {
-            std::cerr << "expr: runtime error: expressions must begin with natural numbers\n";
+            std::cerr << "expr: syntax error: expressions must begin with natural numbers\n";
             exit(1);
         }
         first_operand = new Node{current_token, std::nullopt, std::nullopt};
@@ -102,14 +102,14 @@ auto Reader::parse_expression() -> Node {
     
     current_token = next_token();
     if(current_token.kind != PLUS) {
-        std::cerr << "expr: runtime error: expressions must have operators\n";
+        std::cerr << "expr: syntax error: expressions must have operators\n";
         exit(1);
     }
     tree.internal = current_token;
 
     current_token = next_token();
     if(current_token.kind != NUMBER) {
-        std::cerr << "expr: runtime error: expressions must end with natural numbers\n";
+        std::cerr << "expr: syntax error: expressions must end with natural numbers\n";
         exit(1);
     }
     second_operand = new Node{current_token, std::nullopt, std::nullopt};
