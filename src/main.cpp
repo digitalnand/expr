@@ -64,10 +64,12 @@ auto Reader::skip_spaces() -> void {
 
 auto Reader::extract_number() -> int64_t {
     std::string numeric_value = "";
+
     while(!input.empty() && std::isdigit(input.at(0))) {
         numeric_value += input.at(0);
         input.remove_prefix(1);
     }
+
     return std::stol(numeric_value);
 }
 
@@ -145,6 +147,7 @@ auto Reader::parse_expression() -> Node {
     }
     
     current_token = next_token();
+
     switch(current_token.kind) {
         case PLUS:
             expression.kind = ADDITION;
@@ -239,14 +242,16 @@ auto debug_node(const Node& node) -> std::string {
     auto value = node.data.has_value() ? std::to_string(node.data.value()) : "None";
     auto left = node.left.has_value() ? debug_node(*node.left.value()) : "None";
     auto right = node.right.has_value() ? debug_node(*node.right.value()) : "None";
+
     return std::format("Node[Kind: {}, Value: {}, Left: {}, Right: {}]", debug_node_kind(node.kind), value, left, right);
 }
 
 auto main() -> int32_t {
     std::string input;
+
     while(true) {
         std::cout << "> ";
-        
+
         if(!std::getline(std::cin, input)) {
             exit(0);
         }
