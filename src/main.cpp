@@ -12,6 +12,7 @@ enum TokenKind {
     PLUS,
     MINUS,
     TIMES,
+    DIVISION,
     ILLEGAL,
     END_OF_LINE,
 };
@@ -82,6 +83,9 @@ auto Reader::next_token() -> Token {
         case '*':
             input.remove_prefix(1);
             return Token{TIMES, '*'};
+        case '/':
+            input.remove_prefix(1);
+            return Token{DIVISION, '/'};
         default:
             input.remove_prefix(1);
             return Token{ILLEGAL, current_character};
@@ -126,7 +130,7 @@ auto Reader::parse_expression() -> Node {
     
     current_token = next_token();
     // TODO: improve this check
-    if(current_token.kind != PLUS && current_token.kind != MINUS && current_token.kind != TIMES) {
+    if(current_token.kind != PLUS && current_token.kind != MINUS && current_token.kind != TIMES && current_token.kind != DIVISION) {
         std::cerr << "expr: syntax error: expressions must have operators\n";
         exit(1);
     }
@@ -154,6 +158,8 @@ auto eval_from_node(Node node) -> int64_t {
         return eval_from_node(*node.left.value()) - eval_from_node(*node.right.value());
     case TIMES:
         return eval_from_node(*node.left.value()) * eval_from_node(*node.right.value());
+    case DIVISION:
+        return eval_from_node(*node.left.value()) / eval_from_node(*node.right.value());
     case NUMBER:
         return std::get<int64_t>(node.internal.value);
     default:
@@ -171,6 +177,8 @@ auto debug_token(const Token& token) -> std::string {
         return "MINUS";
     case TIMES:
         return "TIMES";
+    case DIVISION:
+        return "DIVISION";
     case ILLEGAL:
         return std::format("ILLEGAL[{}]", std::get<char>(token.value));;
     case END_OF_LINE:
