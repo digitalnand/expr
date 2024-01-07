@@ -197,22 +197,22 @@ auto eval_from_node(Node node) -> int64_t {
 
 auto debug_token(const Token& token) -> std::string {
     switch(token.kind) {
-    case NUMBER:
-        return std::format("NUMBER[{}]", std::get<int64_t>(token.value));
-    case PLUS:
-        return "PLUS";
-    case MINUS:
-        return "MINUS";
-    case TIMES:
-        return "TIMES";
-    case DIVIDED_BY:
-        return "DIVIDED_BY";
-    case ILLEGAL:
-        return std::format("ILLEGAL[{}]", std::get<char>(token.value));;
-    case END_OF_LINE:
-        return "END_OF_LINE";
-    default:
-        std::unreachable();
+        case NUMBER:
+            return std::format("NUMBER[{}]", std::get<int64_t>(token.value));
+        case PLUS:
+            return "PLUS";
+        case MINUS:
+            return "MINUS";
+        case TIMES:
+            return "TIMES";
+        case DIVIDED_BY:
+            return "DIVIDED_BY";
+        case ILLEGAL:
+            return std::format("ILLEGAL[{}]", std::get<char>(token.value));;
+        case END_OF_LINE:
+            return "END_OF_LINE";
+        default:
+            std::unreachable();
     }
 }
 
