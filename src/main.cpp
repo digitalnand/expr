@@ -7,8 +7,6 @@
 #include <utility>
 #include <vector>
 
-// TODO: parser, evaluator & repl
-
 enum TokenKind {
     NUMBER,
     PLUS,
@@ -172,19 +170,6 @@ auto debug_token(const Token& token) -> std::string {
     default:
         std::unreachable();
     }
-}
-
-auto debug_token_vector(const std::vector<Token>& tokens) -> std::string {
-    std::string output = "{";
-    
-    const char* separator = "";
-    for(const Token& token : tokens) {
-        output += separator + debug_token(token);
-        separator = ", ";
-    }
-
-    output += "}";
-    return output;
 }
 
 auto debug_node(const Node& node) -> std::string {
