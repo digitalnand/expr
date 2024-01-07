@@ -178,11 +178,20 @@ auto debug_node(const Node& node) -> std::string {
 }
 
 auto main() -> int32_t {
-    std::string input = "+1 - +1 + -2";
+    std::string input;
+    while(true) {
+        std::cout << "> ";
+        if(!std::getline(std::cin, input)) {
+            exit(0);
+        }
+        if(input.empty()) continue;
 
-    Reader reader(input);
-    Node tree = reader.parse_expression();
-    std::cout << std::format("result of {}: {}\n", input, eval_from_node(tree));
+        Reader reader(input);
+        const auto tree = reader.parse_expression();
+        const auto result = eval_from_node(tree);
+
+        std::cout << std::format("{}\n", result);
+    }
 
     return 0;
 }
