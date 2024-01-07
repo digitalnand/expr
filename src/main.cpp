@@ -22,7 +22,8 @@ enum NodeKind {
     ADDITION,
     SUBTRACTION,
     MULTIPLICATION,
-    DIVISION
+    DIVISION,
+    NEGATION
 };
 
 struct Token {
@@ -117,10 +118,14 @@ auto Reader::parse_operand() -> Node {
         exit(1);
     }
     
-    auto value = std::get<int64_t>(current_token.value);
+    const auto value = std::get<int64_t>(current_token.value);
 
     if(sign == MINUS) {
-        value = -value;
+        Node expression;
+        expression.kind = NEGATION;
+        expression.left = std::nullopt;
+        expression.right = new Node{OPERAND, value, std::nullopt, std::nullopt};
+        return expression;
     }
 
     return Node{OPERAND, value, std::nullopt, std::nullopt};
@@ -173,18 +178,20 @@ auto Reader::parse_expression() -> Node {
 
 auto eval_from_node(Node node) -> int64_t {
     switch(node.kind) {
-    case ADDITION:
-        return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());
-    case SUBTRACTION:
-        return eval_from_node(*node.left.value()) - eval_from_node(*node.right.value());
-    case MULTIPLICATION:
-        return eval_from_node(*node.left.value()) * eval_from_node(*node.right.value());
-    case DIVISION:
-        return eval_from_node(*node.left.value()) / eval_from_node(*node.right.value());
-    case OPERAND:
-        return node.data.value();
-    default:
-        std::unreachable();
+        case ADDITION:
+            return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());
+        case SUBTRACTION:
+            return eval_from_node(*node.left.value()) - eval_from_node(*node.right.value());
+        case MULTIPLICATION:
+            return eval_from_node(*node.left.value()) * eval_from_node(*node.right.value());
+        case DIVISION:
+            return eval_from_node(*node.left.value()) / eval_from_node(*node.right.value());
+        case NEGATION:
+            return -eval_from_node(*node.right.value());
+        case OPERAND:
+            return node.data.value();
+        default:
+            std::unreachable();
     }
 }
 
@@ -211,18 +218,20 @@ auto debug_token(const Token& token) -> std::string {
 
 auto debug_node_kind(const NodeKind& kind) -> std::string {
     switch(kind) {
-    case OPERAND:
-        return "OPERAND";
-    case ADDITION:
-        return "ADDITION";
-    case SUBTRACTION:
-        return "SUBTRACTION";
-    case MULTIPLICATION:
-        return "MULTIPLICATION";
-    case DIVISION:
-        return "DIVISION";
-    default:
-        std::unreachable();
+        case OPERAND:
+            return "OPERAND";
+        case ADDITION:
+            return "ADDITION";
+        case SUBTRACTION:
+            return "SUBTRACTION";
+        case MULTIPLICATION:
+            return "MULTIPLICATION";
+        case DIVISION:
+            return "DIVISION";
+        case NEGATION:
+            return "NEGATION";
+        default:
+            std::unreachable();
     }
 }
 
