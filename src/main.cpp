@@ -17,13 +17,23 @@ enum TokenKind {
     END_OF_LINE
 };
 
+enum NodeKind {
+    OPERAND,
+    ADDITION,
+    SUBTRACTION,
+    MULTIPLICATION,
+    DIVISION
+};
+
 struct Token {
     TokenKind kind;
     std::variant<int64_t, char> value;
 };
 
 struct Node {
-    Token internal;
+    NodeKind kind;
+
+    std::optional<int64_t> data;
     std::optional<Node*> left;
     std::optional<Node*> right;
 };
@@ -107,12 +117,13 @@ auto Reader::parse_operand() -> Node {
         exit(1);
     }
     
+    auto value = std::get<int64_t>(current_token.value);
+
     if(sign == MINUS) {
-        const auto negated_value = -std::get<int64_t>(current_token.value);
-        current_token.value = negated_value;
+        value = -value;
     }
 
-    return Node{current_token, std::nullopt, std::nullopt};
+    return Node{OPERAND, value, std::nullopt, std::nullopt};
 }
 
 // TODO: improve error handling
@@ -120,7 +131,7 @@ auto Reader::parse_expression() -> Node {
     Node expression;
     Node* first_operand;
     Node* second_operand;
-    Token current_token, internal;
+    Token current_token;
 
     if(last_node.has_value()) {
         first_operand = last_node.value();
@@ -129,16 +140,26 @@ auto Reader::parse_expression() -> Node {
     }
     
     current_token = next_token();
-    // TODO: improve this check
-    if(current_token.kind != PLUS && current_token.kind != MINUS && current_token.kind != TIMES && current_token.kind != DIVIDED_BY) {
-        std::cerr << "expr: syntax error: expressions must have operators\n";
-        exit(1);
+    switch(current_token.kind) {
+        case PLUS:
+            expression.kind = ADDITION;
+            break;
+        case MINUS:
+            expression.kind = SUBTRACTION;
+            break;
+        case TIMES:
+            expression.kind = MULTIPLICATION;
+            break;
+        case DIVIDED_BY:
+            expression.kind = DIVISION;
+            break;
+        default:
+            std::cerr << "expr: syntax error: expressions must have operators\n";
+            exit(1);
     }
-    internal = current_token;
 
     second_operand = new Node{parse_operand()};
 
-    expression.internal = internal;
     expression.left = first_operand;
     expression.right = second_operand;
 
@@ -151,17 +172,17 @@ auto Reader::parse_expression() -> Node {
 }
 
 auto eval_from_node(Node node) -> int64_t {
-    switch(node.internal.kind) {
-    case PLUS:
+    switch(node.kind) {
+    case ADDITION:
         return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());
-    case MINUS:
+    case SUBTRACTION:
         return eval_from_node(*node.left.value()) - eval_from_node(*node.right.value());
-    case TIMES:
+    case MULTIPLICATION:
         return eval_from_node(*node.left.value()) * eval_from_node(*node.right.value());
-    case DIVIDED_BY:
+    case DIVISION:
         return eval_from_node(*node.left.value()) / eval_from_node(*node.right.value());
-    case NUMBER:
-        return std::get<int64_t>(node.internal.value);
+    case OPERAND:
+        return node.data.value();
     default:
         std::unreachable();
     }
@@ -178,7 +199,7 @@ auto debug_token(const Token& token) -> std::string {
     case TIMES:
         return "TIMES";
     case DIVIDED_BY:
-        return "DIVISION";
+        return "DIVIDED_BY";
     case ILLEGAL:
         return std::format("ILLEGAL[{}]", std::get<char>(token.value));;
     case END_OF_LINE:
@@ -188,10 +209,28 @@ auto debug_token(const Token& token) -> std::string {
     }
 }
 
+auto debug_node_kind(const NodeKind& kind) -> std::string {
+    switch(kind) {
+    case OPERAND:
+        return "OPERAND";
+    case ADDITION:
+        return "ADDITION";
+    case SUBTRACTION:
+        return "SUBTRACTION";
+    case MULTIPLICATION:
+        return "MULTIPLICATION";
+    case DIVISION:
+        return "DIVISION";
+    default:
+        std::unreachable();
+    }
+}
+
 auto debug_node(const Node& node) -> std::string {
+    auto value = node.data.has_value() ? std::to_string(node.data.value()) : "None";
     auto left = node.left.has_value() ? debug_node(*node.left.value()) : "None";
     auto right = node.right.has_value() ? debug_node(*node.right.value()) : "None";
-    return std::format("Node[Internal: {}, Left: {}, Right: {}]", debug_token(node.internal), left, right);
+    return std::format("Node[Kind: {}, Value: {}, Left: {}, Right: {}]", debug_node_kind(node.kind), value, left, right);
 }
 
 auto main() -> int32_t {
