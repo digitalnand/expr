@@ -246,10 +246,14 @@ auto main() -> int32_t {
     std::string input;
     while(true) {
         std::cout << "> ";
+        
         if(!std::getline(std::cin, input)) {
             exit(0);
         }
-        if(input.empty()) continue;
+
+        if(input.empty()) {
+            continue;
+        }
 
         Reader reader(input);
         const auto tree = reader.parse_expression();
