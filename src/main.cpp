@@ -50,6 +50,7 @@ struct Reader {
 
     auto parse_operand() -> Node;
     auto parse_expression() -> Node;
+    auto parse_input() -> Node;
 };
 
 Reader::Reader(const std::string& string) {
@@ -179,6 +180,17 @@ auto Reader::parse_expression() -> Node {
     return expression;
 }
 
+auto Reader::parse_input() -> Node {
+    Node tree = parse_operand();
+
+    if(!input.empty()) {
+        last_node = new Node{tree};
+        tree = parse_expression();
+    }
+
+    return tree;
+}
+
 auto eval_from_node(Node node) -> int64_t {
     switch(node.kind) {
         case ADDITION:
@@ -261,7 +273,7 @@ auto main() -> int32_t {
         }
 
         Reader reader(input);
-        const auto tree = reader.parse_expression();
+        const auto tree = reader.parse_input();
         const auto result = eval_from_node(tree);
 
         std::cout << std::format("{}\n", result);
