@@ -143,7 +143,7 @@ auto Reader::parse_operand() -> Node {
 
 // TODO: improve error handling
 auto Reader::parse_expression() -> Node {
-    Node expression;
+    Node current_expression;
     Node* first_operand;
     Node* second_operand;
     Token current_token;
@@ -151,19 +151,18 @@ auto Reader::parse_expression() -> Node {
     first_operand = last_node.has_value() ? last_node.value() : new Node{parse_operand()};
     
     current_token = next_token();
-
     switch(current_token.kind) {
         case PLUS:
-            expression.kind = ADDITION;
+            current_expression.kind = ADDITION;
             break;
         case MINUS:
-            expression.kind = SUBTRACTION;
+            current_expression.kind = SUBTRACTION;
             break;
         case TIMES:
-            expression.kind = MULTIPLICATION;
+            current_expression.kind = MULTIPLICATION;
             break;
         case DIVIDED_BY:
-            expression.kind = DIVISION;
+            current_expression.kind = DIVISION;
             break;
         default:
             std::cerr << "expr: syntax error: expressions must have operators\n";
@@ -172,30 +171,29 @@ auto Reader::parse_expression() -> Node {
 
     second_operand = new Node{parse_operand()};
 
-    expression.left = first_operand;
-    expression.right = second_operand;
+    current_expression.left = first_operand;
+    current_expression.right = second_operand;
 
-    if(!input.empty()) {
-        last_node = second_operand;
-        Node complete_expression;
-        Node next_expression = parse_expression();
+    if(last_node.has_value() && precedence_table.contains(last_node.value()->kind)) {
+        if(precedence_table[current_expression.kind] > precedence_table[last_node.value()->kind]) {
+            auto last_expression = *last_node.value();
 
-        complete_expression.data = std::nullopt;
+            std::swap(current_expression.kind, last_expression.kind);
+            std::swap(current_expression.right, last_expression.left);
 
-        if(precedence_table[next_expression.kind] > precedence_table[expression.kind]) {
-            complete_expression.kind = expression.kind;
-            complete_expression.left = expression.left;
-            complete_expression.right = new Node{next_expression};
-        } else {
-            complete_expression.kind = next_expression.kind;
-            complete_expression.left = new Node{expression};
-            complete_expression.right = next_expression.right;
+            std::swap(last_expression.left, last_expression.right);
+            std::swap(current_expression.left, current_expression.right);
+
+            current_expression.right = new Node{last_expression};
         }
-
-        expression = complete_expression;
     }
 
-    return expression;
+    if(!input.empty()) {
+        last_node = new Node{current_expression};
+        current_expression = parse_expression();
+    }
+
+    return current_expression;
 }
 
 auto Reader::parse_input() -> Node {
