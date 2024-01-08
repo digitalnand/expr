@@ -6,6 +6,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <map>
 
 enum TokenKind {
     NUMBER,
@@ -24,6 +25,13 @@ enum NodeKind {
     MULTIPLICATION,
     DIVISION,
     NEGATION
+};
+
+std::map<NodeKind, int> precedence_table {
+    {ADDITION, 1},
+    {SUBTRACTION, 1},
+    {MULTIPLICATION, 2},
+    {DIVISION, 2}
 };
 
 struct Token {
@@ -140,11 +148,7 @@ auto Reader::parse_expression() -> Node {
     Node* second_operand;
     Token current_token;
 
-    if(last_node.has_value()) {
-        first_operand = last_node.value();
-    } else {
-        first_operand = new Node{parse_operand()};
-    }
+    first_operand = last_node.has_value() ? last_node.value() : new Node{parse_operand()};
     
     current_token = next_token();
 
@@ -172,8 +176,23 @@ auto Reader::parse_expression() -> Node {
     expression.right = second_operand;
 
     if(!input.empty()) {
-        last_node = new Node{expression};
-        expression = parse_expression();
+        last_node = second_operand;
+        Node complete_expression;
+        Node next_expression = parse_expression();
+
+        complete_expression.data = std::nullopt;
+
+        if(precedence_table[next_expression.kind] > precedence_table[expression.kind]) {
+            complete_expression.kind = expression.kind;
+            complete_expression.left = expression.left;
+            complete_expression.right = new Node{next_expression};
+        } else {
+            complete_expression.kind = next_expression.kind;
+            complete_expression.left = new Node{expression};
+            complete_expression.right = next_expression.right;
+        }
+
+        expression = complete_expression;
     }
 
     return expression;
