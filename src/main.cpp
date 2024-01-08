@@ -81,7 +81,6 @@ auto Reader::next_token() -> Token {
         return Token{END_OF_LINE, NULL};
     }
 
-    Token token;
     const auto current_character = input.at(0);
 
     switch(current_character) {
