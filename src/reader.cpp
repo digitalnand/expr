@@ -96,7 +96,7 @@ auto Reader::parse_operand() -> Node {
 
     if(sign == MINUS) {
         Node expression;
-        expression.kind = NEGATION;
+        expression.kind = UNARY_MINUS;
         expression.left = std::nullopt;
         expression.right = new Node{OPERAND, value, std::nullopt, std::nullopt};
         return expression;

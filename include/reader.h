@@ -20,7 +20,7 @@ enum NodeKind {
     SUBTRACTION,
     MULTIPLICATION,
     DIVISION,
-    NEGATION
+    UNARY_MINUS
 };
 
 struct Token {

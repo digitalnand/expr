@@ -14,7 +14,7 @@ auto eval_from_node(Node node) -> double {
             return eval_from_node(*node.left.value()) * eval_from_node(*node.right.value());
         case DIVISION:
             return eval_from_node(*node.left.value()) / eval_from_node(*node.right.value());
-        case NEGATION:
+        case UNARY_MINUS:
             return -eval_from_node(*node.right.value());
         case OPERAND:
             return node.data.value();
@@ -30,7 +30,7 @@ auto main() -> int32_t {
         std::cout << "> ";
 
         if(!std::getline(std::cin, input)) exit(0);
-        
+
         if(input.empty()) continue;
 
         Reader reader(input);
