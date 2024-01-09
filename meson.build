@@ -4,4 +4,6 @@ project('expr', 'cpp',
 
 executable('expr',
            'src/main.cpp',
+           'src/reader.cpp',
+           include_directories : 'include',
            install : true)
