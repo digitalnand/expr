@@ -36,13 +36,13 @@ std::map<NodeKind, int> precedence_table {
 
 struct Token {
     TokenKind kind;
-    std::variant<int64_t, char> value;
+    std::variant<double, char> value;
 };
 
 struct Node {
     NodeKind kind;
 
-    std::optional<int64_t> data;
+    std::optional<double> data;
     std::optional<Node*> left;
     std::optional<Node*> right;
 };
@@ -53,7 +53,7 @@ struct Reader {
 
     Reader(const std::string& string);
     auto skip_spaces() -> void;
-    auto extract_number() -> int64_t;
+    auto extract_number() -> double;
     auto next_token() -> Token;
 
     auto parse_operand() -> Node;
@@ -71,22 +71,38 @@ auto Reader::skip_spaces() -> void {
     }
 }
 
-auto Reader::extract_number() -> int64_t {
+auto Reader::extract_number() -> double {
     std::string numeric_value = "";
+    bool decimal_began = false;
 
-    while(!input.empty() && std::isdigit(input.at(0))) {
-        numeric_value += input.at(0);
+    while(!input.empty()) {
+        const auto current_char = input.at(0);
+
+        if(!std::isdigit(current_char) && current_char != '.') {
+            break;
+        }
+
+        numeric_value += current_char;
         input.remove_prefix(1);
+
+        if(current_char == '.') {
+            // TODO: throw the proper error in this case
+            if(decimal_began) {
+                break;
+            }
+
+            decimal_began = true;
+        }
     }
 
-    return std::stol(numeric_value);
+    return std::stod(numeric_value);
 }
 
 auto Reader::next_token() -> Token {
     skip_spaces();
 
     if(input.empty()) {
-        return Token{END_OF_LINE, NULL};
+        return Token{END_OF_LINE, '\0'};
     }
 
     const auto current_character = input.at(0);
@@ -128,7 +144,7 @@ auto Reader::parse_operand() -> Node {
         exit(1);
     }
     
-    const auto value = std::get<int64_t>(current_token.value);
+    const auto value = std::get<double>(current_token.value);
 
     if(sign == MINUS) {
         Node expression;
@@ -207,7 +223,7 @@ auto Reader::parse_input() -> Node {
     return tree;
 }
 
-auto eval_from_node(Node node) -> int64_t {
+auto eval_from_node(Node node) -> double {
     switch(node.kind) {
         case ADDITION:
             return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());
@@ -229,7 +245,7 @@ auto eval_from_node(Node node) -> int64_t {
 auto debug_token(const Token& token) -> std::string {
     switch(token.kind) {
         case NUMBER:
-            return std::format("NUMBER[{}]", std::get<int64_t>(token.value));
+            return std::format("NUMBER[{}]", std::get<double>(token.value));
         case PLUS:
             return "PLUS";
         case MINUS:
