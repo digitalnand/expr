@@ -5,6 +5,9 @@
 
 #include "reader.h"
 
+#define tokenizer_advance(input) \
+        input.remove_prefix(1);
+
 std::map<NodeKind, int> precedence_table {
     {ADDITION, 1},
     {SUBTRACTION, 1},
@@ -18,7 +21,7 @@ Reader::Reader(const std::string& string) {
 
 auto Reader::skip_spaces() -> void {
     while(!input.empty() && std::isspace(input.at(0))) {
-        input.remove_prefix(1);
+        tokenizer_advance(input);
     }
 }
 
@@ -29,18 +32,14 @@ auto Reader::extract_number() -> double {
     while(!input.empty()) {
         const auto current_char = input.at(0);
 
-        if(!std::isdigit(current_char) && current_char != '.') {
-            break;
-        }
+        if(!std::isdigit(current_char) && current_char != '.') break;
 
         numeric_value += current_char;
-        input.remove_prefix(1);
+        tokenizer_advance(input);
 
         if(current_char == '.') {
             // TODO: throw the proper error in this case
-            if(decimal_began) {
-                break;
-            }
+            if(decimal_began) break;
 
             decimal_began = true;
         }
@@ -52,9 +51,7 @@ auto Reader::extract_number() -> double {
 auto Reader::next_token() -> Token {
     skip_spaces();
 
-    if(input.empty()) {
-        return Token{END_OF_LINE, '\0'};
-    }
+    if(input.empty()) return Token{END_OF_LINE, '\0'};
 
     const auto current_character = input.at(0);
 
@@ -63,19 +60,19 @@ auto Reader::next_token() -> Token {
         case '5': case '6': case '7': case '8': case '9':
             return Token{NUMBER, extract_number()};
         case '+':
-            input.remove_prefix(1);
+            tokenizer_advance(input);
             return Token{PLUS, '+'};
         case '-':
-            input.remove_prefix(1);
+            tokenizer_advance(input);
             return Token{MINUS, '-'};
         case '*':
-            input.remove_prefix(1);
+            tokenizer_advance(input);
             return Token{TIMES, '*'};
         case '/':
-            input.remove_prefix(1);
+            tokenizer_advance(input);
             return Token{DIVIDED_BY, '/'};
         default:
-            input.remove_prefix(1);
+            tokenizer_advance(input);
             return Token{ILLEGAL, current_character};
     }
 }
@@ -119,18 +116,10 @@ auto Reader::parse_expression() -> Node {
     
     current_token = next_token();
     switch(current_token.kind) {
-        case PLUS:
-            current_expression.kind = ADDITION;
-            break;
-        case MINUS:
-            current_expression.kind = SUBTRACTION;
-            break;
-        case TIMES:
-            current_expression.kind = MULTIPLICATION;
-            break;
-        case DIVIDED_BY:
-            current_expression.kind = DIVISION;
-            break;
+        case PLUS: current_expression.kind = ADDITION; break;
+        case MINUS: current_expression.kind = SUBTRACTION; break;
+        case TIMES: current_expression.kind = MULTIPLICATION; break;
+        case DIVIDED_BY: current_expression.kind = DIVISION; break;
         default:
             std::cerr << "expr: syntax error: expressions must have operators\n";
             exit(1);
