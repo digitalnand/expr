@@ -2,7 +2,7 @@
 #include <iostream>
 #include <utility>
 
-#include "reader.h"
+#include "parser.h"
 
 auto eval_from_node(const Node& node) -> double {
     switch(node.kind) {
@@ -33,8 +33,8 @@ auto main() -> int32_t {
 
         if(input.empty()) continue;
 
-        Reader reader(input);
-        const auto tree = reader.parse_input();
+        Parser parser(input);
+        const auto tree = parser.parse_input();
         const auto result = eval_from_node(tree);
 
         std::cout << std::format("{}\n", result);

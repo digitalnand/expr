@@ -1,13 +1,7 @@
-#include <cctype>
-#include <cstdint>
 #include <iostream>
 #include <map>
-#include <string>
 
-#include "reader.h"
-
-#define tokenizer_advance(input) \
-        input.remove_prefix(1);
+#include "parser.h"
 
 std::map<NodeKind, uint16_t> precedence_table {
     {ADDITION, 1},
@@ -16,76 +10,14 @@ std::map<NodeKind, uint16_t> precedence_table {
     {DIVISION, 2}
 };
 
-Reader::Reader(const std::string_view string) {
-    input = string;
-}
-
-auto Reader::skip_spaces() -> void {
-    while(!input.empty() && std::isspace(input.at(0))) {
-        tokenizer_advance(input);
-    }
-}
-
-auto Reader::extract_number() -> double {
-    std::string numeric_value = "";
-    bool decimal_began = false;
-
-    while(!input.empty()) {
-        const auto current_char = input.at(0);
-
-        if(!std::isdigit(current_char) && current_char != '.') break;
-
-        numeric_value += current_char;
-        tokenizer_advance(input);
-
-        if(current_char == '.') {
-            // TODO: throw the proper error in this case
-            if(decimal_began) break;
-
-            decimal_began = true;
-        }
-    }
-
-    return std::stod(numeric_value);
-}
-
-auto Reader::next_token() -> Token {
-    skip_spaces();
-
-    if(input.empty()) return Token{END_OF_LINE, '\0'};
-
-    const auto current_character = input.at(0);
-
-    switch(current_character) {
-        case '0': case '1': case '2': case '3': case '4':
-        case '5': case '6': case '7': case '8': case '9':
-            return Token{NUMBER, extract_number()};
-        case '+':
-            tokenizer_advance(input);
-            return Token{PLUS, '+'};
-        case '-':
-            tokenizer_advance(input);
-            return Token{MINUS, '-'};
-        case '*':
-            tokenizer_advance(input);
-            return Token{TIMES, '*'};
-        case '/':
-            tokenizer_advance(input);
-            return Token{DIVIDED_BY, '/'};
-        default:
-            tokenizer_advance(input);
-            return Token{ILLEGAL, current_character};
-    }
-}
-
 // TODO: improve error handling
-auto Reader::parse_operand() -> Node {
+auto Parser::parse_operand() -> Node {
     auto sign = PLUS;
-    auto current_token = next_token();
+    auto current_token = lexer.next_token();
 
     if(current_token.kind == PLUS || current_token.kind == MINUS) {
         sign = current_token.kind;
-        current_token = next_token();
+        current_token = lexer.next_token();
     }
 
     if(current_token.kind != NUMBER) {
@@ -107,7 +39,7 @@ auto Reader::parse_operand() -> Node {
 }
 
 // TODO: improve error handling
-auto Reader::parse_expression() -> Node {
+auto Parser::parse_expression() -> Node {
     Node current_expression;
     Node* first_operand;
     Node* second_operand;
@@ -115,7 +47,7 @@ auto Reader::parse_expression() -> Node {
 
     first_operand = last_node.has_value() ? last_node.value() : new Node{parse_operand()};
     
-    current_token = next_token();
+    current_token = lexer.next_token();
     switch(current_token.kind) {
         case PLUS: current_expression.kind = ADDITION; break;
         case MINUS: current_expression.kind = SUBTRACTION; break;
@@ -145,7 +77,7 @@ auto Reader::parse_expression() -> Node {
         }
     }
 
-    if(!input.empty()) {
+    if(!lexer.is_input_empty()) {
         last_node = new Node{current_expression};
         current_expression = parse_expression();
     }
@@ -153,10 +85,10 @@ auto Reader::parse_expression() -> Node {
     return current_expression;
 }
 
-auto Reader::parse_input() -> Node {
+auto Parser::parse_input() -> Node {
     Node tree = parse_operand();
 
-    if(!input.empty()) {
+    if(!lexer.is_input_empty()) {
         last_node = new Node{tree};
         tree = parse_expression();
     }

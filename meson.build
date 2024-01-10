@@ -4,6 +4,7 @@ project('expr', 'cpp',
 
 executable('expr',
            'src/main.cpp',
-           'src/reader.cpp',
+           'src/parser.cpp',
+           'src/lexer.cpp',
            include_directories : 'include',
            install : true)
