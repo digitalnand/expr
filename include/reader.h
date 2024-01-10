@@ -49,6 +49,6 @@ struct Reader {
         auto parse_expression() -> Node;
 
     public:
-        Reader(const std::string& string);
+        Reader(const std::string_view string);
         auto parse_input() -> Node;
 };

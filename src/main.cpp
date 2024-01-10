@@ -4,7 +4,7 @@
 
 #include "reader.h"
 
-auto eval_from_node(Node node) -> double {
+auto eval_from_node(const Node& node) -> double {
     switch(node.kind) {
         case ADDITION:
             return eval_from_node(*node.left.value()) + eval_from_node(*node.right.value());

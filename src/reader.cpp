@@ -1,4 +1,5 @@
 #include <cctype>
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <string>
@@ -8,14 +9,14 @@
 #define tokenizer_advance(input) \
         input.remove_prefix(1);
 
-std::map<NodeKind, int> precedence_table {
+std::map<NodeKind, uint16_t> precedence_table {
     {ADDITION, 1},
     {SUBTRACTION, 1},
     {MULTIPLICATION, 2},
     {DIVISION, 2}
 };
 
-Reader::Reader(const std::string& string) {
+Reader::Reader(const std::string_view string) {
     input = string;
 }
 
