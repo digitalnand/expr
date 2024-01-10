@@ -38,6 +38,9 @@ auto main() -> int32_t {
         const auto result = eval_from_node(tree);
 
         std::cout << std::format("{}\n", result);
+
+        if(tree.left.has_value()) delete tree.left.value();
+        if(tree.right.has_value()) delete tree.right.value();
     }
 
     return 0;

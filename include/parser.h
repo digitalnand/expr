@@ -25,7 +25,7 @@ struct Node {
 struct Parser {
     private:
         Lexer lexer;
-        std::optional<Node*> last_node;
+        std::optional<Node> last_node;
 
         auto parse_operand() -> Node;
         auto parse_expression() -> Node;

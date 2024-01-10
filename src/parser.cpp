@@ -41,11 +41,10 @@ auto Parser::parse_operand() -> Node {
 // TODO: improve error handling
 auto Parser::parse_expression() -> Node {
     Node current_expression;
-    Node* first_operand;
-    Node* second_operand;
+    Node first_operand, second_operand;
     Token current_token;
 
-    first_operand = last_node.has_value() ? last_node.value() : new Node{parse_operand()};
+    first_operand = last_node.has_value() ? last_node.value() : parse_operand();
     
     current_token = lexer.next_token();
     switch(current_token.kind) {
@@ -58,14 +57,14 @@ auto Parser::parse_expression() -> Node {
             exit(1);
     }
 
-    second_operand = new Node{parse_operand()};
+    second_operand = parse_operand();
 
-    current_expression.left = first_operand;
-    current_expression.right = second_operand;
+    current_expression.left = new Node{first_operand};
+    current_expression.right = new Node{second_operand};
 
-    if(last_node.has_value() && precedence_table.contains(last_node.value()->kind)) {
-        if(precedence_table[current_expression.kind] > precedence_table[last_node.value()->kind]) {
-            auto last_expression = *last_node.value();
+    if(last_node.has_value() && precedence_table.contains(last_node.value().kind)) {
+        if(precedence_table[current_expression.kind] > precedence_table[last_node.value().kind]) {
+            auto last_expression = last_node.value();
 
             std::swap(current_expression.kind, last_expression.kind);
             std::swap(current_expression.right, last_expression.left);
@@ -78,7 +77,7 @@ auto Parser::parse_expression() -> Node {
     }
 
     if(!lexer.is_input_empty()) {
-        last_node = new Node{current_expression};
+        last_node = current_expression;
         current_expression = parse_expression();
     }
 
@@ -89,7 +88,7 @@ auto Parser::parse_input() -> Node {
     Node tree = parse_operand();
 
     if(!lexer.is_input_empty()) {
-        last_node = new Node{tree};
+        last_node = tree;
         tree = parse_expression();
     }
 
